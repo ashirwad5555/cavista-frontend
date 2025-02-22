@@ -10,6 +10,7 @@ class PostImage {
       url: json['url'],
     );
   }
+  
 }
 
 class Post {
@@ -44,6 +45,7 @@ class Post {
       createdAt: json['createdAt'],
     );
   }
+ 
 }
 
 class Comment {

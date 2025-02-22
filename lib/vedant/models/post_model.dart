@@ -1,3 +1,5 @@
+import 'package:cavista_app/modules/Post.dart';
+
 class Post {
   final String id;
   final String content;
@@ -16,6 +18,20 @@ class Post {
     required this.verifiedCount,
     required this.createdAt,
   });
+  factory Post.fromJson(Map<String, dynamic> json) {
+    return Post(
+      id: json['_id'] ?? '', // Provide default empty string if null
+      content: json['content'] ?? '',
+      authorName: json['authorName'] ?? 'Unknown',
+      images: (json['images'] as List?)
+              ?.map((img) => img as String)
+              .toList(),
+      comments: json['comments'] ?? [],
+      verifiedCount: json['verifiedCount'] ?? 0,
+      createdAt: json['createdAt'] ?? '',
+    );
+  }
+
 }
 
 class Comment {
