@@ -14,6 +14,7 @@ class _AuthScreenState extends State<AuthScreen> {
   bool isLogin = true;
   bool isDoctor = false;
   bool _obscurePassword = true;
+  bool _isLoading = false; // Add this line
   final _formKey = GlobalKey<FormState>();
 
   final Map<String, String> _authData = {
@@ -24,19 +25,22 @@ class _AuthScreenState extends State<AuthScreen> {
     'doctorId': '',
   };
 
-  // Original _submit() method remains unchanged
+  
   Future<void> _submit() async {
-    // Your existing _submit implementation
+    
      if (!_formKey.currentState!.validate()) return;
 
     _formKey.currentState!.save();
 
-    final baseUrl =
-        'https://cavista-backend.onrender.com/api'; // Update with your server URL
+    setState(() {
+      _isLoading = true; // Set loading to true when submission starts
+    });
 
+    final baseUrl =
+        'https://cavista-backend-1.onrender.com/api'; 
     try {
       if (isLogin) {
-        // Login API call
+     
         final response = await http.post(
           Uri.parse('$baseUrl/auth/login'),
           headers: {'Content-Type': 'application/json'},
@@ -47,17 +51,13 @@ class _AuthScreenState extends State<AuthScreen> {
         );
 
         if (response.statusCode == 200) {
-          final responseData = json.decode(response.body);
-
-          // Store tokens
+          final responseData = json.decode(response.body);         
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('access_token', responseData['access_token']);
           await prefs.setString('refresh_token', responseData['refresh_token']);
           await prefs.setString('user_id', responseData['user']['id']);
           await prefs.setString(
-              'username', responseData['user']['username']); // Add this line
-
-          // Navigate based on user role
+              'username', responseData['user']['username']); 
           final userResponse = await http.get(
             Uri.parse('$baseUrl/auth/me'),
             headers: {
@@ -80,7 +80,7 @@ class _AuthScreenState extends State<AuthScreen> {
           throw Exception(json.decode(response.body)['error']);
         }
       } else {
-        // Signup API calls
+       
         final signupEndpoint = isDoctor
             ? '$baseUrl/auth/register/doctor'
             : '$baseUrl/auth/register/patient';
@@ -103,7 +103,7 @@ class _AuthScreenState extends State<AuthScreen> {
         );
 
         if (response.statusCode == 201) {
-          // Show success message and switch to login
+         
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Registration successful! Please login.')),
           );
@@ -129,6 +129,11 @@ class _AuthScreenState extends State<AuthScreen> {
           ],
         ),
       );
+    }
+    finally {
+      setState(() {
+        _isLoading = false; // Set loading to false when done
+      });
     }
   }
 
@@ -163,7 +168,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Logo or App Name
+                        
                           Icon(
                             Icons.medical_services,
                             size: 64,
@@ -178,7 +183,7 @@ class _AuthScreenState extends State<AuthScreen> {
                           ),
                           const SizedBox(height: 24),
                           
-                          // Form Fields
+                      
                           if (!isLogin)
                             TextFormField(
                               decoration: InputDecoration(
@@ -295,7 +300,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             ),
                           if (!isLogin && isDoctor) const SizedBox(height: 16),
                           
-                          // Role Selection
+                         
                           if (!isLogin)
                             Card(
                               elevation: 0,
@@ -324,31 +329,40 @@ class _AuthScreenState extends State<AuthScreen> {
                           
                           const SizedBox(height: 24),
                           
-                          // Submit Button
+                        
                           SizedBox(
                             width: double.infinity,
                             height: 48,
                             child: ElevatedButton(
-                              onPressed: _submit,
+                              onPressed: _isLoading ? null : _submit,
                               style: ElevatedButton.styleFrom(
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 elevation: 2,
                               ),
-                              child: Text(
-                                isLogin ? 'LOGIN' : 'SIGN UP',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                              child: _isLoading
+                                  ? SizedBox(
+                                      height: 24,
+                                      width: 24,
+                                      child: CircularProgressIndicator(
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                                Colors.white),
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : Text(
+                                      isLogin ? 'LOGIN' : 'SIGN UP',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                             ),
                           ),
-                          
                           const SizedBox(height: 16),
-                          
-                          // Toggle between Login and Sign Up
+                      
                           TextButton(
                             onPressed: () {
                               setState(() {

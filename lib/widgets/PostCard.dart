@@ -32,14 +32,14 @@ class PostCard extends StatelessWidget {
     }
 
     try {
-      // Debug prints
+      
       print('Adding comment with:');
       print('Post ID: ${post.id}');
       print('Content: $content');
       print('Username: $username');
 
       final response = await http.post(
-        Uri.parse('https://cavista-backend.onrender.com/api/comments'),
+        Uri.parse('https://cavista-backend-1.onrender.com/api/comments'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $accessToken',
@@ -51,7 +51,7 @@ class PostCard extends StatelessWidget {
         }),
       );
 
-      // Debug prints
+      
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
 
@@ -68,7 +68,7 @@ class PostCard extends StatelessWidget {
         throw Exception(errorData['error'] ?? 'Failed to add comment');
       }
     } catch (e) {
-      print('Error adding comment: $e'); // Debug print
+      print('Error adding comment: $e'); 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error adding comment: $e')),
       );
@@ -146,7 +146,7 @@ class PostCard extends StatelessWidget {
                   icon: const Icon(Icons.thumb_up_outlined),
                   label: Text('Verify (${post.verifiedCount})'),
                   onPressed: () {
-                    // TODO: Implement verify functionality
+                    // here verify functionality
                   },
                 ),
                 TextButton.icon(
@@ -189,7 +189,7 @@ class PostCard extends StatelessWidget {
               child: FutureBuilder<http.Response>(
                 future: http.get(
                   Uri.parse(
-                      'https://cavista-backend.onrender.com/api/comments/${post.id}'),
+                      'https://cavista-backend-1.onrender.com/api/comments/${post.id}'),
                   headers: {
                     'Authorization': 'Bearer $accessToken',
                   },

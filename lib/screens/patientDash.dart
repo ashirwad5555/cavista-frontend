@@ -5,9 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:cavista_app/modules/Post.dart';
 import 'dart:io';
-import 'dart:convert';
 
 class PatientDashboard extends StatefulWidget {
   const PatientDashboard({Key? key}) : super(key: key);
@@ -39,8 +37,8 @@ class _PatientDashboardState extends State<PatientDashboard> {
       _username = prefs.getString('username');
     });
 
-     print('Access Token: $_accessToken'); // Debug log
-    print('Username: $_username'); // Debug log
+     print('Access Token: $_accessToken'); 
+    print('Username: $_username'); 
     
     _fetchPosts();
     setState(() {});
@@ -57,7 +55,7 @@ class _PatientDashboardState extends State<PatientDashboard> {
     setState(() => _isLoading = true);
     try {
       final response = await http.get(
-        Uri.parse('https://cavista-backend.onrender.com/api/posts'),
+        Uri.parse('https://cavista-backend-1.onrender.com/api/posts'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $_accessToken',
@@ -70,11 +68,11 @@ class _PatientDashboardState extends State<PatientDashboard> {
           _posts = postsJson.map((json) => Post.fromJson(json)).toList();
         });
       } else if (response.statusCode == 401) {
-        // Handle unauthorized access
+        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Session expired. Please login again.')),
         );
-        // Optionally navigate to login screen
+       
       } else {
         throw Exception('Failed to load posts: ${response.statusCode}');
       }
@@ -117,7 +115,7 @@ class _PatientDashboardState extends State<PatientDashboard> {
       }
 
       final response = await http.post(
-        Uri.parse('https://cavista-backend.onrender.com/api/posts'),
+        Uri.parse('https://cavista-backend-1.onrender.com/api/posts'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $_accessToken',

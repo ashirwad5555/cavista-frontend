@@ -21,7 +21,7 @@ class Post {
     String dateStr;
     final createdAt = json['createdAt'];
     if (createdAt is Map && createdAt['\$date'] != null) {
-      // Handle MongoDB ISODate format
+      
       dateStr = createdAt['\$date'];
     } else {
       dateStr = DateTime.now().toIso8601String();
@@ -32,7 +32,7 @@ class Post {
       content: json['content'] ?? '',
       authorName: json['authorName'] ?? '',
       images: json['images'] != null ? List<String>.from(json['images']) : null,
-      createdAt: {'\$date': dateStr}, // Store the original ISO date string
+      createdAt: {'\$date': dateStr}, 
       comments: json['comments'] != null
           ? List<Comment>.from(json['comments'].map((x) => Comment.fromJson(x)))
           : [],
