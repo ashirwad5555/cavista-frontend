@@ -24,7 +24,6 @@ class _PatientDashboardState extends State<PatientDashboard> {
   List<String> imageNames = [];
   final ScrollController _scrollController = ScrollController();
 
-
   @override
   void initState() {
     super.initState();
@@ -36,13 +35,13 @@ class _PatientDashboardState extends State<PatientDashboard> {
     setState(() {
       _accessToken = prefs.getString('access_token');
       _username = prefs.getString('username');
-       _userRole = prefs.getString('role'); // Add this line to get the role
+      _userRole = prefs.getString('role'); // Add this line to get the role
     });
 
-     print('Access Token: $_accessToken'); 
-    print('Username: $_username'); 
-     print('User Role: $_userRole'); // Add this for debugging
-    
+    print('Access Token: $_accessToken');
+    print('Username: $_username');
+    print('User Role: $_userRole'); // Add this for debugging
+
     _fetchPosts();
     setState(() {});
   }
@@ -60,22 +59,20 @@ class _PatientDashboardState extends State<PatientDashboard> {
       final response = await http.get(
         Uri.parse('https://cavista-backend-1.onrender.com/api/posts'),
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': 'Bearer $_accessToken',
+          'Content-Type': 'application/json',
         },
       );
-      print(response.body);
+
       if (response.statusCode == 200) {
         final List<dynamic> postsJson = json.decode(response.body);
         setState(() {
           _posts = postsJson.map((json) => Post.fromJson(json)).toList();
         });
       } else if (response.statusCode == 401) {
-        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Session expired. Please login again.')),
         );
-       
       } else {
         throw Exception('Failed to load posts: ${response.statusCode}');
       }
@@ -104,42 +101,53 @@ class _PatientDashboardState extends State<PatientDashboard> {
 
     setState(() => _isLoading = true);
     try {
-      List<String> base64Images = [];
-      if (imagePaths != null && imagePaths.isNotEmpty) {
+      // Create form data
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('https://cavista-backend-1.onrender.com/api/posts'),
+      );
+
+      // Add headers
+      request.headers.addAll({
+        'Authorization': 'Bearer $_accessToken',
+      });
+
+      // Add text fields
+      request.fields['content'] = content;
+      request.fields['authorName'] = _username!;
+
+      // Add images if any
+      if (imagePaths != null) {
         for (String path in imagePaths) {
-          try {
-            String base64Image = await imageToBase64(path);
-            base64Images.add(base64Image);
-          } catch (e) {
-            print('Error converting image to base64: $e');
-            continue;
-          }
+          File imageFile = File(path);
+          String fileName = path.split('/').last;
+          request.files.add(
+            await http.MultipartFile.fromPath(
+              'images',
+              imageFile.path,
+              filename: fileName,
+            ),
+          );
         }
       }
 
-      final response = await http.post(
-        Uri.parse('https://cavista-backend-1.onrender.com/api/posts'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $_accessToken',
-        },
-        body: json.encode({
-          'content': content,
-          'authorName': _username,
-          'images': imagePaths ?? [],
-          'comments': [],
-          'verifiedCount': 0,
-        }),
-      );
+      // Send request
+      final response = await request.send();
+      final responseData = await response.stream.bytesToString();
 
       if (response.statusCode == 201) {
-        await _fetchPosts();
+        await _fetchPosts(); // Refresh posts
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Post created successfully')),
         );
+        // Clear selected images
+        setState(() {
+          images.clear();
+          imageNames.clear();
+        });
       } else {
         throw Exception(
-            'Server returned ${response.statusCode}: ${response.body}');
+            'Failed to create post: ${json.decode(responseData)['error']}');
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -291,7 +299,8 @@ class _PatientDashboardState extends State<PatientDashboard> {
       ),
     );
   }
-Future<void> _showCreatePostDialog(BuildContext context) async {
+
+  Future<void> _showCreatePostDialog(BuildContext context) async {
     final textController = TextEditingController();
 
     return showDialog(

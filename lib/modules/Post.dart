@@ -1,42 +1,47 @@
+class PostImage {
+  final String fileId;
+  final String url;
+
+  PostImage({required this.fileId, required this.url});
+
+  factory PostImage.fromJson(Map<String, dynamic> json) {
+    return PostImage(
+      fileId: json['file_id'],
+      url: json['url'],
+    );
+  }
+}
+
 class Post {
   final String id;
   final String content;
   final String authorName;
-  final List<String>? images;
-  final Map<String, String> createdAt;
-  final List<Comment> comments;
+  final List<PostImage> images;
+  final List<dynamic> comments;
   final int verifiedCount;
+  final String createdAt;
 
   Post({
     required this.id,
     required this.content,
     required this.authorName,
-    this.images,
-    required this.createdAt,
+    required this.images,
     required this.comments,
     required this.verifiedCount,
+    required this.createdAt,
   });
 
   factory Post.fromJson(Map<String, dynamic> json) {
-    String dateStr;
-    final createdAt = json['createdAt'];
-    if (createdAt is Map && createdAt['\$date'] != null) {
-      
-      dateStr = createdAt['\$date'];
-    } else {
-      dateStr = DateTime.now().toIso8601String();
-    }
-
     return Post(
-      id: json['_id'] is Map ? json['_id']['\$oid'] : json['_id'] ?? '',
-      content: json['content'] ?? '',
-      authorName: json['authorName'] ?? '',
-      images: json['images'] != null ? List<String>.from(json['images']) : null,
-      createdAt: {'\$date': dateStr}, 
-      comments: json['comments'] != null
-          ? List<Comment>.from(json['comments'].map((x) => Comment.fromJson(x)))
-          : [],
+      id: json['_id'],
+      content: json['content'],
+      authorName: json['authorName'],
+      images: (json['images'] as List)
+          .map((img) => PostImage.fromJson(img))
+          .toList(),
+      comments: json['comments'] ?? [],
       verifiedCount: json['verifiedCount'] ?? 0,
+      createdAt: json['createdAt'],
     );
   }
 }

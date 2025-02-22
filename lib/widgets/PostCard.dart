@@ -3,6 +3,7 @@ import 'package:cavista_app/modules/Post.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 
 class PostCard extends StatelessWidget {
   final Post post;
@@ -17,7 +18,7 @@ class PostCard extends StatelessWidget {
     this.accessToken,
     this.userRole, // Add this
   }) : super(key: key);
-  
+
   // Add this method to handle verification
   Future<void> _verifyPost(BuildContext context) async {
     if (accessToken == null || username == null) {
@@ -63,12 +64,33 @@ class PostCard extends StatelessWidget {
     }
   }
 
-  String _formatDate(Map<String, String> dateMap) {
-    if (dateMap['\$date'] != null) {
-      final date = DateTime.parse(dateMap['\$date']!);
-      return '${date.day}/${date.month}/${date.year}';
+  String _formatDate(dynamic createdAt) {
+    try {
+      if (createdAt is Map<String, dynamic>) {
+        // Handle MongoDB ISODate format
+        if (createdAt.containsKey("\$date")) {
+          final dateString = createdAt["\$date"];
+          if (dateString is String) {
+            final date = DateTime.parse(dateString);
+            return DateFormat('MMM d, yyyy').format(date);
+          }
+        }
+      } else if (createdAt is String) {
+        print('--------------------${createdAt}');
+        // Handle direct ISO string format
+
+        var dateLocal = DateTime.parse(createdAt).toLocal();
+
+        return DateFormat('MMM d, yyyy').format(dateLocal);
+      }
+
+      // If we reach here, the date format wasn't recognized
+      print('Unrecognized date format: $createdAt');
+      return 'Invalid date';
+    } catch (e) {
+      print('Error formatting date: $e');
+      return 'Invalid date';
     }
-    return 'No date';
   }
 
   Future<void> _addComment(BuildContext context, String content) async {
@@ -80,7 +102,6 @@ class PostCard extends StatelessWidget {
     }
 
     try {
-      
       print('Adding comment with:');
       print('Post ID: ${post.id}');
       print('Content: $content');
@@ -99,7 +120,6 @@ class PostCard extends StatelessWidget {
         }),
       );
 
-      
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
 
@@ -116,12 +136,13 @@ class PostCard extends StatelessWidget {
         throw Exception(errorData['error'] ?? 'Failed to add comment');
       }
     } catch (e) {
-      print('Error adding comment: $e'); 
+      print('Error adding comment: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error adding comment: $e')),
       );
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -164,18 +185,29 @@ class PostCard extends StatelessWidget {
                   return Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8.0),
+                      borderRadius: BorderRadius.circular(12),
                       child: Image.network(
-                        post.images![index],
+                        'https://cavista-backend-1.onrender.com${post.images![index].url}',
                         fit: BoxFit.cover,
                         width: 200,
+                        height: 200,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Center(
+                            child: CircularProgressIndicator(
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                  : null,
+                            ),
+                          );
+                        },
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
                             width: 200,
+                            height: 200,
                             color: Colors.grey[200],
-                            child: const Center(
-                              child: Icon(Icons.error_outline),
-                            ),
+                            child: Icon(Icons.error, color: Colors.red),
                           );
                         },
                       ),
@@ -265,7 +297,7 @@ class PostCard extends StatelessWidget {
                         title: Text(comment.username),
                         subtitle: Text(comment.content),
                         trailing: Text(
-                          '${comment.createdAt.day}/${comment.createdAt.month}/${comment.createdAt.year}',
+                          DateFormat('MMM d, yyyy').format(comment.createdAt),
                         ),
                       );
                     },
