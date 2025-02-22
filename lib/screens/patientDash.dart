@@ -36,6 +36,10 @@ class _PatientDashboardState extends State<PatientDashboard> {
       _accessToken = prefs.getString('access_token');
       _username = prefs.getString('username');
     });
+
+     print('Access Token: $_accessToken'); // Debug log
+    print('Username: $_username'); // Debug log
+    
     _fetchPosts();
     setState(() {});
   }

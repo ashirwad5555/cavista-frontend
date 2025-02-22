@@ -51,7 +51,9 @@ class _AuthScreenState extends State<AuthScreen> {
           await prefs.setString('access_token', responseData['access_token']);
           await prefs.setString('refresh_token', responseData['refresh_token']);
           await prefs.setString('user_id', responseData['user']['id']);
-
+          await prefs.setString(
+              'username', responseData['user']['username']); // Add this line
+          
           // Navigate based on user role
           final userResponse = await http.get(
             Uri.parse('$baseUrl/auth/me'),
@@ -86,7 +88,7 @@ class _AuthScreenState extends State<AuthScreen> {
           'mobno': _authData['phone'],
           'password': _authData['password'],
         };
-
+        
         if (isDoctor) {
           signupData['verification_id'] = _authData['doctorId'];
         }
