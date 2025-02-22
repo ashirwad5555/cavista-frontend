@@ -185,7 +185,8 @@ class _PatientDashboardState extends State<PatientDashboard> {
                 itemCount: _posts.length,
                 itemBuilder: (context, index) {
                   final post = _posts[index];
-                  return PostCard(post: post);
+                  return PostCard(post: post, accessToken: _accessToken,
+                  username: _username,);
                 },
               ),
             ),

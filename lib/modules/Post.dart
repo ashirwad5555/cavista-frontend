@@ -42,29 +42,60 @@ class Post {
 }
 
 class Comment {
+  final String id;
+  final String postId;
+  final String userId;
+  final String username;
   final String content;
-  final String authorName;
   final DateTime createdAt;
+  final List<Reply> replies;
 
   Comment({
+    required this.id,
+    required this.postId,
+    required this.userId,
+    required this.username,
     required this.content,
-    required this.authorName,
     required this.createdAt,
+    required this.replies,
   });
 
   factory Comment.fromJson(Map<String, dynamic> json) {
-    String dateStr;
-    final createdAt = json['createdAt'];
-    if (createdAt is Map && createdAt['\$date'] != null) {
-      dateStr = createdAt['\$date'];
-    } else {
-      dateStr = DateTime.now().toIso8601String();
-    }
-
     return Comment(
+      id: json['id'] ?? '',
+      postId: json['post_id'] ?? '',
+      userId: json['user_id'] ?? '',
+      username: json['username'] ?? '',
       content: json['content'] ?? '',
-      authorName: json['authorName'] ?? '',
-      createdAt: DateTime.parse(dateStr),
+      createdAt: DateTime.parse(
+          json['created_at'] ?? DateTime.now().toIso8601String()),
+      replies: json['replies'] != null
+          ? List<Reply>.from(json['replies'].map((x) => Reply.fromJson(x)))
+          : [],
+    );
+  }
+}
+
+class Reply {
+  final String userId;
+  final String username;
+  final String content;
+  final DateTime createdAt;
+
+  Reply({
+    required this.userId,
+    required this.username,
+    required this.content,
+    required this.createdAt,
+  });
+
+  factory Reply.fromJson(Map<String, dynamic> json) {
+    return Reply(
+      userId: json['user_id'] ?? '',
+      username: json['username'] ?? '',
+      content: json['content'] ?? '',
+      createdAt: DateTime.parse(
+          json['created_at'] ?? DateTime.now().toIso8601String()),
     );
   }
 }

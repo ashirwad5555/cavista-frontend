@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:cavista_app/modules/Post.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class PostCard extends StatelessWidget {
   final Post post;
+  final String? username;
+  final String? accessToken;
 
-  const PostCard({Key? key, required this.post}) : super(key: key);
+  const PostCard({
+    Key? key,
+    required this.post,
+    this.username,
+    this.accessToken,
+  }) : super(key: key);
 
   String _formatDate(Map<String, String> dateMap) {
     if (dateMap['\$date'] != null) {
@@ -14,6 +23,57 @@ class PostCard extends StatelessWidget {
     return 'No date';
   }
 
+  Future<void> _addComment(BuildContext context, String content) async {
+    if (accessToken == null || username == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please login to add a comment')),
+      );
+      return;
+    }
+
+    try {
+      // Debug prints
+      print('Adding comment with:');
+      print('Post ID: ${post.id}');
+      print('Content: $content');
+      print('Username: $username');
+
+      final response = await http.post(
+        Uri.parse('https://cavista-backend.onrender.com/api/comments'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $accessToken',
+        },
+        body: json.encode({
+          'post_id': post.id,
+          'username': username,
+          'content': content,
+        }),
+      );
+
+      // Debug prints
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Comment added successfully')),
+        );
+      } else if (response.statusCode == 401) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please login again to add a comment')),
+        );
+      } else {
+        final errorData = json.decode(response.body);
+        throw Exception(errorData['error'] ?? 'Failed to add comment');
+      }
+    } catch (e) {
+      print('Error adding comment: $e'); // Debug print
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error adding comment: $e')),
+      );
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -105,29 +165,83 @@ class PostCard extends StatelessWidget {
   }
 
   void _showCommentsDialog(BuildContext context) {
+    final commentController = TextEditingController();
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Comments'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: post.comments.length,
-            itemBuilder: (context, index) {
-              final comment = post.comments[index];
-              return ListTile(
-                title: Text(comment.authorName),
-                subtitle: Text(comment.content),
-                trailing: Text(_formatDate(comment.createdAt as Map<String, String>)),
-              );
-            },
-          ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: commentController,
+              decoration: const InputDecoration(
+                labelText: 'Add a comment',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 2,
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.maxFinite,
+              height: 200,
+              child: FutureBuilder<http.Response>(
+                future: http.get(
+                  Uri.parse(
+                      'https://cavista-backend.onrender.com/api/comments/${post.id}'),
+                  headers: {
+                    'Authorization': 'Bearer $accessToken',
+                  },
+                ),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  }
+                  if (!snapshot.hasData) {
+                    return const Center(child: Text('No comments yet'));
+                  }
+
+                  final commentsData = json.decode(snapshot.data!.body);
+                  final comments = (commentsData['comments'] as List)
+                      .map((comment) => Comment.fromJson(comment))
+                      .toList();
+
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: comments.length,
+                    itemBuilder: (context, index) {
+                      final comment = comments[index];
+                      return ListTile(
+                        title: Text(comment.username),
+                        subtitle: Text(comment.content),
+                        trailing: Text(
+                          '${comment.createdAt.day}/${comment.createdAt.month}/${comment.createdAt.year}',
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Close'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (commentController.text.isNotEmpty) {
+                await _addComment(context, commentController.text);
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Add Comment'),
           ),
         ],
       ),
