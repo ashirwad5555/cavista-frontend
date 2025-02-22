@@ -2,18 +2,66 @@ import 'package:flutter/material.dart';
 import 'package:cavista_app/modules/Post.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PostCard extends StatelessWidget {
   final Post post;
   final String? username;
   final String? accessToken;
+  final String? userRole; // Add this
 
   const PostCard({
     Key? key,
     required this.post,
     this.username,
     this.accessToken,
+    this.userRole, // Add this
   }) : super(key: key);
+  
+  // Add this method to handle verification
+  Future<void> _verifyPost(BuildContext context) async {
+    if (accessToken == null || username == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please login to verify')),
+      );
+      return;
+    }
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('user_id');
+
+      final response = await http.put(
+        Uri.parse(
+            'https://cavista-backend-1.onrender.com/api/posts/${post.id}/add_verifier'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $accessToken',
+        },
+        body: json.encode({
+          'verifier_id': userId,
+          'verifier_name': username,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Post verified successfully')),
+        );
+      } else if (response.statusCode == 400) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('You have already verified this post')),
+        );
+      } else {
+        final errorData = json.decode(response.body);
+        throw Exception(errorData['error'] ?? 'Failed to verify post');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error verifying post: $e')),
+      );
+    }
+  }
 
   String _formatDate(Map<String, String> dateMap) {
     if (dateMap['\$date'] != null) {
@@ -145,9 +193,7 @@ class PostCard extends StatelessWidget {
                 TextButton.icon(
                   icon: const Icon(Icons.thumb_up_outlined),
                   label: Text('Verify (${post.verifiedCount})'),
-                  onPressed: () {
-                    // here verify functionality
-                  },
+                  onPressed: () => _verifyPost(context),
                 ),
                 TextButton.icon(
                   icon: const Icon(Icons.comment_outlined),

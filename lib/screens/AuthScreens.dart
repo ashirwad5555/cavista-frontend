@@ -1,5 +1,6 @@
 import 'package:cavista_app/screens/doctor_Dash.dart';
 import 'package:cavista_app/screens/patientDash.dart';
+import 'package:cavista_app/vedant/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -25,10 +26,8 @@ class _AuthScreenState extends State<AuthScreen> {
     'doctorId': '',
   };
 
-  
   Future<void> _submit() async {
-    
-     if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) return;
 
     _formKey.currentState!.save();
 
@@ -36,11 +35,9 @@ class _AuthScreenState extends State<AuthScreen> {
       _isLoading = true; // Set loading to true when submission starts
     });
 
-    final baseUrl =
-        'https://cavista-backend-1.onrender.com/api'; 
+    final baseUrl = 'https://cavista-backend-1.onrender.com/api';
     try {
       if (isLogin) {
-     
         final response = await http.post(
           Uri.parse('$baseUrl/auth/login'),
           headers: {'Content-Type': 'application/json'},
@@ -51,13 +48,20 @@ class _AuthScreenState extends State<AuthScreen> {
         );
 
         if (response.statusCode == 200) {
-          final responseData = json.decode(response.body);         
+          final responseData = json.decode(response.body);
+          print("responseData is   ${responseData}");
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('access_token', responseData['access_token']);
           await prefs.setString('refresh_token', responseData['refresh_token']);
-          await prefs.setString('user_id', responseData['user']['id']);
           await prefs.setString(
-              'username', responseData['user']['username']); 
+              'user_id', responseData['user']['id'].toString());
+          await prefs.setString('username', responseData['user']['username']);
+          await prefs.setString(
+              'role', responseData['user']['role']); // Store user role
+
+          // Print for debugging
+          print('User ID: ${responseData['user']['id'].toString()}');
+
           final userResponse = await http.get(
             Uri.parse('$baseUrl/auth/me'),
             headers: {
@@ -68,9 +72,9 @@ class _AuthScreenState extends State<AuthScreen> {
 
           if (userResponse.statusCode == 200) {
             final userData = json.decode(userResponse.body);
-            if (isDoctor) {
+            if (responseData['user']['role'] == 'doctor') {
               Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => DoctorDash()));
+                  MaterialPageRoute(builder: (context) => HomeScreen()));
             } else {
               Navigator.push(context,
                   MaterialPageRoute(builder: (context) => PatientDashboard()));
@@ -80,7 +84,6 @@ class _AuthScreenState extends State<AuthScreen> {
           throw Exception(json.decode(response.body)['error']);
         }
       } else {
-       
         final signupEndpoint = isDoctor
             ? '$baseUrl/auth/register/doctor'
             : '$baseUrl/auth/register/patient';
@@ -103,7 +106,6 @@ class _AuthScreenState extends State<AuthScreen> {
         );
 
         if (response.statusCode == 201) {
-         
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Registration successful! Please login.')),
           );
@@ -129,8 +131,7 @@ class _AuthScreenState extends State<AuthScreen> {
           ],
         ),
       );
-    }
-    finally {
+    } finally {
       setState(() {
         _isLoading = false; // Set loading to false when done
       });
@@ -168,7 +169,6 @@ class _AuthScreenState extends State<AuthScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                        
                           Icon(
                             Icons.medical_services,
                             size: 64,
@@ -177,13 +177,14 @@ class _AuthScreenState extends State<AuthScreen> {
                           const SizedBox(height: 16),
                           Text(
                             isLogin ? 'Welcome Back' : 'Create Account',
-                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                           ),
                           const SizedBox(height: 24),
-                          
-                      
                           if (!isLogin)
                             TextFormField(
                               decoration: InputDecoration(
@@ -204,7 +205,6 @@ class _AuthScreenState extends State<AuthScreen> {
                               onSaved: (value) => _authData['name'] = value!,
                             ),
                           if (!isLogin) const SizedBox(height: 16),
-                          
                           TextFormField(
                             decoration: InputDecoration(
                               labelText: 'Email Address',
@@ -225,7 +225,6 @@ class _AuthScreenState extends State<AuthScreen> {
                             onSaved: (value) => _authData['email'] = value!,
                           ),
                           const SizedBox(height: 16),
-                          
                           if (!isLogin)
                             TextFormField(
                               decoration: InputDecoration(
@@ -247,14 +246,15 @@ class _AuthScreenState extends State<AuthScreen> {
                               onSaved: (value) => _authData['phone'] = value!,
                             ),
                           if (!isLogin) const SizedBox(height: 16),
-                          
                           TextFormField(
                             decoration: InputDecoration(
                               labelText: 'Password',
                               prefixIcon: Icon(Icons.lock_outline),
                               suffixIcon: IconButton(
                                 icon: Icon(
-                                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                                  _obscurePassword
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
                                 ),
                                 onPressed: () {
                                   setState(() {
@@ -278,7 +278,6 @@ class _AuthScreenState extends State<AuthScreen> {
                             onSaved: (value) => _authData['password'] = value!,
                           ),
                           const SizedBox(height: 16),
-                          
                           if (!isLogin && isDoctor)
                             TextFormField(
                               decoration: InputDecoration(
@@ -291,16 +290,16 @@ class _AuthScreenState extends State<AuthScreen> {
                                 fillColor: Colors.grey[50],
                               ),
                               validator: (value) {
-                                if (isDoctor && (value == null || value.isEmpty)) {
+                                if (isDoctor &&
+                                    (value == null || value.isEmpty)) {
                                   return 'Please enter Doctor ID';
                                 }
                                 return null;
                               },
-                              onSaved: (value) => _authData['doctorId'] = value!,
+                              onSaved: (value) =>
+                                  _authData['doctorId'] = value!,
                             ),
                           if (!isLogin && isDoctor) const SizedBox(height: 16),
-                          
-                         
                           if (!isLogin)
                             Card(
                               elevation: 0,
@@ -326,10 +325,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                 ),
                               ),
                             ),
-                          
                           const SizedBox(height: 24),
-                          
-                        
                           SizedBox(
                             width: double.infinity,
                             height: 48,
@@ -362,7 +358,6 @@ class _AuthScreenState extends State<AuthScreen> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                      
                           TextButton(
                             onPressed: () {
                               setState(() {

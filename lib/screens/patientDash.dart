@@ -19,6 +19,7 @@ class _PatientDashboardState extends State<PatientDashboard> {
   bool _isLoading = false;
   String? _accessToken;
   String? _username;
+  String? _userRole;
   List<String> images = [];
   List<String> imageNames = [];
   final ScrollController _scrollController = ScrollController();
@@ -35,10 +36,12 @@ class _PatientDashboardState extends State<PatientDashboard> {
     setState(() {
       _accessToken = prefs.getString('access_token');
       _username = prefs.getString('username');
+       _userRole = prefs.getString('role'); // Add this line to get the role
     });
 
      print('Access Token: $_accessToken'); 
     print('Username: $_username'); 
+     print('User Role: $_userRole'); // Add this for debugging
     
     _fetchPosts();
     setState(() {});
@@ -270,6 +273,7 @@ class _PatientDashboardState extends State<PatientDashboard> {
                             post: post,
                             accessToken: _accessToken,
                             username: _username,
+                            userRole: _userRole,
                           ),
                         );
                       },
