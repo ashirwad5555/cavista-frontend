@@ -3,7 +3,7 @@ import 'package:cavista_app/screens/patientDash.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart'; // Add this for token storage
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthScreen extends StatefulWidget {
   @override
@@ -13,6 +13,7 @@ class AuthScreen extends StatefulWidget {
 class _AuthScreenState extends State<AuthScreen> {
   bool isLogin = true;
   bool isDoctor = false;
+  bool _obscurePassword = true;
   final _formKey = GlobalKey<FormState>();
 
   final Map<String, String> _authData = {
@@ -23,8 +24,10 @@ class _AuthScreenState extends State<AuthScreen> {
     'doctorId': '',
   };
 
+  // Original _submit() method remains unchanged
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+    // Your existing _submit implementation
+     if (!_formKey.currentState!.validate()) return;
 
     _formKey.currentState!.save();
 
@@ -53,7 +56,7 @@ class _AuthScreenState extends State<AuthScreen> {
           await prefs.setString('user_id', responseData['user']['id']);
           await prefs.setString(
               'username', responseData['user']['username']); // Add this line
-          
+
           // Navigate based on user role
           final userResponse = await http.get(
             Uri.parse('$baseUrl/auth/me'),
@@ -88,7 +91,7 @@ class _AuthScreenState extends State<AuthScreen> {
           'mobno': _authData['phone'],
           'password': _authData['password'],
         };
-        
+
         if (isDoctor) {
           signupData['verification_id'] = _authData['doctorId'];
         }
@@ -132,94 +135,239 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(isLogin ? 'Login' : 'Sign Up'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                if (!isLogin)
-                  TextFormField(
-                    decoration: InputDecoration(labelText: 'Name'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your name';
-                      }
-                      return null;
-                    },
-                    onSaved: (value) => _authData['name'] = value!,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Theme.of(context).primaryColor.withOpacity(0.1),
+              Theme.of(context).primaryColor.withOpacity(0.2),
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Card(
+                  elevation: 8,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                TextFormField(
-                  decoration: InputDecoration(labelText: 'Email'),
-                  validator: (value) {
-                    if (value == null || !value.contains('@')) {
-                      return 'Invalid email';
-                    }
-                    return null;
-                  },
-                  onSaved: (value) => _authData['email'] = value!,
-                ),
-                if (!isLogin)
-                  TextFormField(
-                    decoration: InputDecoration(labelText: 'Phone Number'),
-                    validator: (value) {
-                      if (value == null || value.length < 10) {
-                        return 'Invalid phone number';
-                      }
-                      return null;
-                    },
-                    onSaved: (value) => _authData['phone'] = value!,
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Logo or App Name
+                          Icon(
+                            Icons.medical_services,
+                            size: 64,
+                            color: Theme.of(context).primaryColor,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            isLogin ? 'Welcome Back' : 'Create Account',
+                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          
+                          // Form Fields
+                          if (!isLogin)
+                            TextFormField(
+                              decoration: InputDecoration(
+                                labelText: 'Full Name',
+                                prefixIcon: Icon(Icons.person_outline),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                filled: true,
+                                fillColor: Colors.grey[50],
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your name';
+                                }
+                                return null;
+                              },
+                              onSaved: (value) => _authData['name'] = value!,
+                            ),
+                          if (!isLogin) const SizedBox(height: 16),
+                          
+                          TextFormField(
+                            decoration: InputDecoration(
+                              labelText: 'Email Address',
+                              prefixIcon: Icon(Icons.email_outlined),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              filled: true,
+                              fillColor: Colors.grey[50],
+                            ),
+                            keyboardType: TextInputType.emailAddress,
+                            validator: (value) {
+                              if (value == null || !value.contains('@')) {
+                                return 'Invalid email';
+                              }
+                              return null;
+                            },
+                            onSaved: (value) => _authData['email'] = value!,
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          if (!isLogin)
+                            TextFormField(
+                              decoration: InputDecoration(
+                                labelText: 'Phone Number',
+                                prefixIcon: Icon(Icons.phone_outlined),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                filled: true,
+                                fillColor: Colors.grey[50],
+                              ),
+                              keyboardType: TextInputType.phone,
+                              validator: (value) {
+                                if (value == null || value.length < 10) {
+                                  return 'Invalid phone number';
+                                }
+                                return null;
+                              },
+                              onSaved: (value) => _authData['phone'] = value!,
+                            ),
+                          if (!isLogin) const SizedBox(height: 16),
+                          
+                          TextFormField(
+                            decoration: InputDecoration(
+                              labelText: 'Password',
+                              prefixIcon: Icon(Icons.lock_outline),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _obscurePassword = !_obscurePassword;
+                                  });
+                                },
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              filled: true,
+                              fillColor: Colors.grey[50],
+                            ),
+                            obscureText: _obscurePassword,
+                            validator: (value) {
+                              if (value == null || value.length < 6) {
+                                return 'Password must be at least 6 characters';
+                              }
+                              return null;
+                            },
+                            onSaved: (value) => _authData['password'] = value!,
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          if (!isLogin && isDoctor)
+                            TextFormField(
+                              decoration: InputDecoration(
+                                labelText: 'Doctor ID',
+                                prefixIcon: Icon(Icons.badge_outlined),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                filled: true,
+                                fillColor: Colors.grey[50],
+                              ),
+                              validator: (value) {
+                                if (isDoctor && (value == null || value.isEmpty)) {
+                                  return 'Please enter Doctor ID';
+                                }
+                                return null;
+                              },
+                              onSaved: (value) => _authData['doctorId'] = value!,
+                            ),
+                          if (!isLogin && isDoctor) const SizedBox(height: 16),
+                          
+                          // Role Selection
+                          if (!isLogin)
+                            Card(
+                              elevation: 0,
+                              color: Colors.grey[50],
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(color: Colors.grey[300]!),
+                              ),
+                              child: SwitchListTile(
+                                title: Text(
+                                  'Register as Doctor',
+                                  style: TextStyle(fontWeight: FontWeight.w500),
+                                ),
+                                value: isDoctor,
+                                onChanged: (value) {
+                                  setState(() {
+                                    isDoctor = value;
+                                  });
+                                },
+                                secondary: Icon(
+                                  Icons.medical_services_outlined,
+                                  color: Theme.of(context).primaryColor,
+                                ),
+                              ),
+                            ),
+                          
+                          const SizedBox(height: 24),
+                          
+                          // Submit Button
+                          SizedBox(
+                            width: double.infinity,
+                            height: 48,
+                            child: ElevatedButton(
+                              onPressed: _submit,
+                              style: ElevatedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 2,
+                              ),
+                              child: Text(
+                                isLogin ? 'LOGIN' : 'SIGN UP',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                          
+                          const SizedBox(height: 16),
+                          
+                          // Toggle between Login and Sign Up
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                isLogin = !isLogin;
+                              });
+                            },
+                            child: Text(
+                              isLogin
+                                  ? 'Don\'t have an account? Sign Up'
+                                  : 'Already have an account? Login',
+                              style: TextStyle(fontWeight: FontWeight.w500),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                TextFormField(
-                  decoration: InputDecoration(labelText: 'Password'),
-                  obscureText: true,
-                  validator: (value) {
-                    if (value == null || value.length < 6) {
-                      return 'Password must be at least 6 characters';
-                    }
-                    return null;
-                  },
-                  onSaved: (value) => _authData['password'] = value!,
                 ),
-                if (!isLogin && isDoctor)
-                  TextFormField(
-                    decoration: InputDecoration(labelText: 'Doctor ID'),
-                    validator: (value) {
-                      if (isDoctor && (value == null || value.isEmpty)) {
-                        return 'Please enter Doctor ID';
-                      }
-                      return null;
-                    },
-                    onSaved: (value) => _authData['doctorId'] = value!,
-                  ),
-                SwitchListTile(
-                  title: Text('Register as Doctor'),
-                  value: isDoctor,
-                  onChanged: (value) {
-                    setState(() {
-                      isDoctor = value;
-                    });
-                  },
-                ),
-                ElevatedButton(
-                  onPressed: _submit,
-                  child: Text(isLogin ? 'LOGIN' : 'SIGN UP'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    setState(() {
-                      isLogin = !isLogin;
-                    });
-                  },
-                  child: Text(
-                    isLogin ? 'Create new account' : 'Already have an account',
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
