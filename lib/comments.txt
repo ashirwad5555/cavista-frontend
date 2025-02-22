@@ -1,0 +1,2 @@
+Now once logged in as patient There should display various posts. Post will be one class which will have following attributes. 
+post content, images(optional) , comments, verified count,name of a person who made post. for timebeing create dummy posts. create this dashboard which will have various posts like any social media account.   

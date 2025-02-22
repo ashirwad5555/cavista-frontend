@@ -1,3 +1,5 @@
+import 'package:cavista_app/screens/AuthScreens.dart';
+import 'package:cavista_app/screens/patientDash.dart';
 import 'package:flutter/material.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
@@ -18,12 +20,13 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      initialRoute: '/login',
-      routes: {
-        '/login': (context) => const LoginScreen(),
-        '/register': (context) => const RegisterScreen(),
-        '/home': (context) => const HomeScreen(),
-      },
+      home: AuthScreen(),
+      // initialRoute: '/login',
+      // routes: {
+      //   '/login': (context) => const LoginScreen(),
+      //   '/register': (context) => const RegisterScreen(),
+      //   '/home': (context) => const HomeScreen(),
+      // },
     );
   }
 }
