@@ -1,3 +1,4 @@
+import 'package:cavista_app/Navigation/PatientNavigation.dart';
 import 'package:cavista_app/screens/doctor_Dash.dart';
 import 'package:cavista_app/screens/patientDash.dart';
 import 'package:cavista_app/vedant/screens/home_screen.dart';
@@ -77,7 +78,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   MaterialPageRoute(builder: (context) => HomeScreen()));
             } else {
               Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => PatientDashboard()));
+                  MaterialPageRoute(builder: (context) => PatientNavigation()));
             }
           }
         } else {

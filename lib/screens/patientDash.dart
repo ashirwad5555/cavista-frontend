@@ -1,3 +1,4 @@
+import 'package:cavista_app/siddhesh/chatbot/chatbot.dart';
 import 'package:cavista_app/widgets/PostCard.dart';
 import 'package:flutter/material.dart';
 import 'package:cavista_app/modules/Post.dart';
@@ -292,9 +293,14 @@ class _PatientDashboardState extends State<PatientDashboard> {
               ),
             ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showCreatePostDialog(context),
+        onPressed: () {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (ctx) => ChatBot(name: _username ?? 'User')));
+        },
         backgroundColor: Theme.of(context).primaryColor,
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.chat),
         elevation: 4,
       ),
     );

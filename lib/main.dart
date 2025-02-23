@@ -1,3 +1,4 @@
+import 'package:cavista_app/Navigation/PatientNavigation.dart';
 import 'package:cavista_app/screens/AuthScreens.dart';
 import 'package:cavista_app/screens/patientDash.dart';
 import 'package:flutter/material.dart';
