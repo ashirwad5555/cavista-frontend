@@ -218,25 +218,26 @@ class PostCard extends StatelessWidget {
             ),
           const Divider(),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                TextButton.icon(
-                  icon: const Icon(Icons.thumb_up_outlined),
-                  label: Text('Verify (${post.verifiedCount})'),
-                  onPressed: () => _verifyPost(context),
-                ),
-                TextButton.icon(
-                  icon: const Icon(Icons.comment_outlined),
-                  label: Text('Comments (${post.comments.length})'),
-                  onPressed: () {
-                    _showCommentsDialog(context);
-                  },
-                ),
-              ],
-            ),
-          ),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  if (userRole ==
+                      "doctor") 
+                    TextButton.icon(
+                      icon: const Icon(Icons.thumb_up_outlined),
+                      label: Text('Verify (${post.verifiedCount})'),
+                      onPressed: () => _verifyPost(context),
+                    ),
+                  TextButton.icon(
+                    icon: const Icon(Icons.comment_outlined),
+                    label: Text('Comments'),
+                    onPressed: () {
+                      _showCommentsDialog(context);
+                    },
+                  ),
+                ],
+              )),
         ],
       ),
     );
